@@ -10,6 +10,7 @@ import json
 import openpyxl
 import jsonToExcel
 import tkinter as tk
+from tkinter import filedialog
 
 # df = pd.read_json('1.json')
 
@@ -38,7 +39,8 @@ def write_into_excel(in_path, out_path):
                     ws.merge_cells(start_row=row, start_column=my_col, end_row=row + members_num - 1, end_column=my_col)
 
             id_number = jsonToExcel.idcard[i][j]
-            check_id.check_id(id_number, row)
+
+            check_id.check_id(id_number, row, jsonToExcel.zong_num[i][j][-3:], jsonToExcel.leader_name[i][j])
 
             # 宗地号 A 1
             fill_and_merge(1, jsonToExcel.zong_num)
@@ -159,6 +161,7 @@ class App(tk.Tk):
 
     def __init__(self, sample_path, out_path):
         super().__init__()
+        self.title('开发版')
         self.sample_path = sample_path
         self.out_path = out_path
 
@@ -170,17 +173,28 @@ class App(tk.Tk):
             self.list_families = ocr_id.get_family(False)
             self.json_dir = self.list_families[1]
 
-        def list_to_excel():
+        def list_to_excel(is_choose=False):
             print(self.json_dir)
-            my_json_path = r'C:\Users\sc\PycharmProjects\real_estate_integration\2021-08-19 09-31-12'
-            my_json_path = self.json_dir
-            print(my_json_path)
-            jsonToExcel.info_basic_out(my_json_path)
-            path_time = os.path.join('结果', my_json_path)
+            path_time = os.path.join('结果', self.json_dir)
             if not os.path.exists(path_time):
                 os.makedirs(path_time)
+            # my_json_path = r'C:\Users\sc\PycharmProjects\real_estate_integration\2021-08-19 09-31-12'
+            if is_choose:
+                my_json_path = filedialog.askdirectory()
+            else:
+                my_json_path = os.path.join('json', self.json_dir)
+            print(my_json_path)
+            jsonToExcel.info_basic_out(my_json_path)
+            if os.path.exists(r'refsrc.xlsx'):
+                jsonToExcel.match_ref(r'refsrc.xlsx', os.path.join(path_time, '家庭成员核查反馈.txt'))
+
+            # jsonToExcel.relation_solu()
+
             write_into_excel(self.sample_path, os.path.join(path_time, '挂接表.xlsx'))
-            check_id.write_id_error_file(os.path.join(path_time, '身份证检查结果.txt'))
+            check_id.write_id_error_file(os.path.join(path_time, '家庭成员核查反馈.txt'))
+
+        def list_to_excel_choose():
+            list_to_excel(True)
 
         # def json_on_text():
         #     for family in self.list_families:
@@ -189,6 +203,7 @@ class App(tk.Tk):
         tk.Button(self, text="OCR识别", command=ocr_to_list).pack()
         tk.Button(self, text="本地数据", command=json_to_list).pack()
         tk.Button(self, text="写入excel", command=list_to_excel).pack()
+        tk.Button(self, text="选取文件夹并写入excel", command=list_to_excel_choose).pack()
         # text1 = tk.Text(self, width=65, height=30)
         #
         # scroll = tk.Scrollbar()

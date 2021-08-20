@@ -2,6 +2,7 @@
 import datetime
 import os
 import re
+from tkinter import filedialog
 
 # line = "Cats are smarter than dogs"
 # matchObj = re.match(r'(.*) are (.*?) .*', line, re.M | re.I)
@@ -14,6 +15,7 @@ import re
 
 
 import deal_with_data
+import jsonToExcel
 import ocr_id
 import parcel_property_sheet
 
@@ -44,4 +46,9 @@ if __name__ == '__main__':
     #
     #     f.write('hello' + '\n')
 
-    print('0123A'.lower())
+    print('hello')
+    path = filedialog.askdirectory()
+    pl = os.listdir(path)
+    print('old', pl)
+    jsonToExcel.sort_file_name(pl)
+    print('new', pl)

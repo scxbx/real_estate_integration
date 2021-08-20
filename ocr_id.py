@@ -111,12 +111,13 @@ def request(url, data):
         print(err)
 
 
-def get_householder_name(filename):
+def get_householder_name(filename, access_token):
     """
     通过百度api，获取身份证json，
     如果有response， 保存json在对应的路径，并返回未经处理的字典;
     如果没有，返回 None
 
+    :param access_token: 百度api的access token
     :param filename: 图片路径
     :return: 未经处理的字典 或 None
     """
@@ -130,7 +131,7 @@ def get_householder_name(filename):
     img = base64.b64encode(my_file.read())
 
     params = {"id_card_side": "front", "image": img}
-    access_token = fetch_token()
+    # access_token = fetch_token()
     request_url = request_url + "?access_token=" + access_token
     headers = {'content-type': 'application/x-www-form-urlencoded'}
     response = requests.post(request_url, data=params, headers=headers)
@@ -147,12 +148,13 @@ def get_householder_name(filename):
         print("No response!")
 
 
-def get_householder_book(filename):
+def get_householder_book(filename, access_token):
     """
     通过百度api，获取户口本json，
     如果有response， 保存json在对应的路径，并返回未经处理的字典;
     如果没有，返回 None
 
+    :param access_token: 百度api的access_token
     :param filename: 图片路径
     :return: 未经处理的字典 或 None
     """
@@ -162,7 +164,7 @@ def get_householder_book(filename):
     img = base64.b64encode(f.read())
     img = compress_image_bs4(img)
     params = {"image": img}
-    access_token = fetch_token()
+    # access_token = fetch_token()
     request_url = request_url + "?access_token=" + access_token
     headers = {'content-type': 'application/x-www-form-urlencoded'}
     response = requests.post(request_url, data=params, headers=headers)
@@ -267,8 +269,11 @@ def get_family(is_http=False):
     count_family = 0
     create_time = datetime.datetime.now()
     string = create_time.strftime("%Y-%m-%d %H-%M-%S")
+    access_token = fetch_token()
+    # print('ocr_id.dir_list', dir_list)
 
     for m_dir in dir_list:
+
         count_family += 1
         full_path = os.path.join(pathA, m_dir)
         code_parcel = m_dir[0:19]
@@ -278,7 +283,7 @@ def get_family(is_http=False):
             cut_image.cut_half_image(os.path.join(full_path, '1-1身份证明.jpg'))  # 对半切图片
 
         if is_http:
-            dict_id_card = get_householder_name(os.path.join(full_path, '1-1身份证明.jpg'))
+            dict_id_card = get_householder_name(os.path.join(full_path, '1-1身份证明.jpg'), access_token)
         else:
             dict_id_card = get_dict_from_json_file(os.path.join(full_path, '1-1身份证明.jpg'))
         # hh_name = get_atr(dict_id_card, '姓名')
@@ -299,7 +304,7 @@ def get_family(is_http=False):
                     count += 1
                     f_file = os.path.join(full_path, file)
                     if is_http:
-                        dict_a = get_householder_book(f_file)
+                        dict_a = get_householder_book(f_file, fetch_token())
                     else:
                         dict_a = get_dict_from_json_file(f_file)
                     dict_member = get_one_dict(dict_a)
@@ -322,10 +327,10 @@ def get_family(is_http=False):
         family_dict['家庭成员'] = members_list
         family_dict['家庭总人数'] = len(members_list)
 
-
-        if not os.path.exists(string):
-            os.mkdir(string)
-        out_file = open(os.path.join(string, str(count_family) + '.json'), "w")
+        time_path = os.path.join("json", string)
+        if not os.path.exists(time_path):
+            os.makedirs(time_path)
+        out_file = open(os.path.join(time_path, str(count_family) + '.json'), "w")
         json.dump(family_dict, out_file, indent=6, ensure_ascii=False)
         mylist.append(family_dict)
         out_file.close()
@@ -340,6 +345,7 @@ def get_family_id_card_only(is_http=False):
     :param is_http: is_http: 是否使用百度api。若为否，则读取选择的图片文件夹所对应的json文件夹中的json文件
     :return: 一个数组，每个元素都是一个家庭的字典（没有名为"家庭成员"的key）
     """
+    access_token = fetch_token()
     pathA = filedialog.askdirectory()
     dir_list = os.listdir(pathA)
     mylist = []
@@ -356,7 +362,7 @@ def get_family_id_card_only(is_http=False):
         cut_image.cut_half_image(os.path.join(full_path, '1-1身份证明.jpg'))    # 对半切图片
 
         if is_http:
-            dict_id_card = get_householder_name(os.path.join(full_path, '1-1身份证明.jpg'))
+            dict_id_card = get_householder_name(os.path.join(full_path, '1-1身份证明.jpg'), access_token)
         else:
             dict_id_card = get_dict_from_json_file(os.path.join(full_path, '1-1身份证明.jpg'))
         # hh_name = get_atr(dict_id_card, '姓名')
@@ -371,9 +377,10 @@ def get_family_id_card_only(is_http=False):
             family_dict['家庭成员'] = members_list
             family_dict['家庭总人数'] = len(members_list)
 
-            if not os.path.exists(string):
-                os.mkdir(string)
-            out_file = open(os.path.join(string, str(count_family) + '.json'), "w")
+            time_path = os.path.join("json", string)
+            if not os.path.exists(time_path):
+                os.makedirs(time_path)
+            out_file = open(os.path.join(time_path, str(count_family) + '.json'), "w")
             json.dump(family_dict, out_file, indent=6, ensure_ascii=False)
             mylist.append(family_dict)
             out_file.close()

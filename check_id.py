@@ -3,9 +3,9 @@ import time
 error_list = []
 
 
-def check_id_length(n, row):
+def check_id_length(n, row, zong, leader):
     def log(string):
-        msg = "{}\t{}\t{}".format(row, n, string)
+        msg = "{}\t{}\t{}\t{}\t{}".format(zong, leader, row, n, string)
         error_list.append(msg)
 
     if len(str(n)) != 18:
@@ -16,9 +16,9 @@ def check_id_length(n, row):
         return True
 
 
-def check_id_data(n, row):
+def check_id_data(n, row, zong, leader):
     def log(string):
-        msg = "{}\t{}\t{}".format(row, n, string)
+        msg = "{}\t{}\t{}\t{}\t{}".format(zong, leader, row, n, string)
         error_list.append(msg)
 
     n = str(n).lower()
@@ -34,12 +34,12 @@ def check_id_data(n, row):
     elif (int(n[12:14])) > 31:
         log(n[12:14] + "日出生？,您一定是充话费送的")
     else:
-        check_id_data2(n, row)
+        check_id_data2(n, row, zong, leader)
 
 
-def check_id_data2(n, row):
+def check_id_data2(n, row, zong, leader):
     def log(string):
-        msg = "{}\t{}\t{}".format(row, n, string)
+        msg = "{}\t{}\t{}\t{}\t{}".format(zong, leader, row, n, string)
         error_list.append(msg)
 
     var = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2]
@@ -64,13 +64,14 @@ def check_id_data2(n, row):
         return 0
 
 
-def check_id(num, row):
-    if check_id_length(num, row):
-        check_id_data(num, row)
+def check_id(num, row, zong, leader):
+    if check_id_length(num, row, zong, leader):
+        check_id_data(num, row, zong, leader)
 
 
 def write_id_error_file(path):
-    with open(path, "w") as f:
+    with open(path, "a") as f:
+        f.write('【家庭成员身份证核实】 1.宗地号 2.权利人 3.错误信息\n')
         for error in error_list:
             f.write(error + '\n')
 
@@ -115,10 +116,11 @@ def write_id_error_file(path):
 
 
 if __name__ == "__main__":
-    num = '35058219970313101'
-    check_id(num, 1)
-    num = '46902820141029092X'
-    check_id(num, 2)
-
-    write_id_error_file(r'结果\id1.txt')
-    write_id_error_file(r'结果\id2.txt')
+    # num = '35058219970313101'
+    # check_id(num, 1)
+    # num = '46902820141029092X'
+    # check_id(num, 2)
+    #
+    # write_id_error_file(r'结果\id1.txt')
+    # write_id_error_file(r'结果\id2.txt')
+    print('hellow')
