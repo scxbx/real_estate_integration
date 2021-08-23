@@ -1,6 +1,6 @@
 # coding=utf-8
 # !/usr/bin/env python
-# coding=gbk
+
 import sys
 
 import pandas as pd
@@ -56,13 +56,12 @@ def sort_file_name(a_list):
 
 def info_basic_out(path):  # path 是只存放json文件的文件夹路径
     pathDir = os.listdir(path)  # 索引json的文件夹
-    print('old pathDir', pathDir)
     sort_file_name(pathDir)
-    print('new pathDir', pathDir)
     for s in pathDir:
         s = os.path.join(path, s)
         with open(s, 'r') as f:
             data = json.loads(f.read())
+            print('data', data)
             df = pd.json_normalize(
                 data,
                 meta=['权利人姓名', '宗地号', '权利人证件编号', '权利人关系'],
@@ -361,6 +360,7 @@ def relation_solu():
             else:
                 continue
 
+    print()
 
 def match_ref(ref_path, txt_path):
     '''将嵌套列表变成一维列表'''
@@ -430,10 +430,10 @@ def write_to_txt(path, list_d, list_l):
 
 if __name__ == '__main__':
     print('Hello world!')
-    info_basic_out(r'C:\Users\sc\PycharmProjects\real_estate_integration\json\2021-08-19 15-54-37')
-    # print("relation1", relation)
-    # relation_solu()
-    # print("relation2", relation)
-    # match_ref(r'refsrc.xlsx')
+    info_basic_out(r'C:\Users\sc\Documents\飞行者科技\房地一体\各种测试\关系')
+    print("relation1", relation)
+    relation_solu()
+    print("relation2", relation)
+    match_ref(r'refsrc.xlsx')
 
 

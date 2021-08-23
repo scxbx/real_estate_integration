@@ -47,8 +47,11 @@ if __name__ == '__main__':
     #     f.write('hello' + '\n')
 
     print('hello')
-    path = filedialog.askdirectory()
-    pl = os.listdir(path)
-    print('old', pl)
-    jsonToExcel.sort_file_name(pl)
-    print('new', pl)
+    path = r'E:/照片核对/礼亭4/02电子档案\110000001001JC00001郭团结\2-1户口本.jpg'
+    l1 = os.path.split(path)
+    print(l1)
+    l2 = os.path.split(l1[0])
+    print(l2[1][14:] + ' ' + l1[1])
+
+    code_and_name = os.path.split(os.path.split(path)[0])[1][14:] + os.path.split(path)[1]
+    print(code_and_name)

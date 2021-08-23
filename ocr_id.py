@@ -123,7 +123,7 @@ def get_householder_name(filename, access_token):
     """
     if not os.path.exists(filename):
         print("{} 缺失身份证照片，无法识别。".format(filename))
-        msg_error.append("{} 缺失身份证照片，无法识别。".format(filename))
+        msg_error.append("{} 缺失身份证照片，无法识别。".format(get_code_name_number(filename)))
         return
     request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/idcard"
     # 二进制方式打开图片文件
@@ -144,7 +144,7 @@ def get_householder_name(filename, access_token):
         out_file.close()
         return dict1
     else:
-        msg_error.append('{} 身份证识别没有回复'.format(filename))
+        msg_error.append('{} 身份证识别没有回复'.format(get_code_name_number(filename)))
         print("No response!")
 
 
@@ -178,7 +178,7 @@ def get_householder_book(filename, access_token):
         out_file.close()
         return dict1
     else:
-        msg_error.append('{} 户口本识别没有回复'.format(filename))
+        msg_error.append('{} 户口本识别没有回复'.format(get_code_name_number(filename)))
         return dict1
 
 
@@ -253,6 +253,16 @@ def get_dict_from_json_file(path):
         return my_dict
 
 
+def get_code_name_number(path):
+    """
+    从E:/照片核对/礼亭4/02电子档案\\110000001001JC00001郭团结 得到 00001郭团结 2-1户口本.jpg
+
+    :param path: 路径
+    :return: 结果
+    """
+    return os.path.split(os.path.split(path)[0])[1][14:] + ' ' + os.path.split(path)[1]
+
+
 def get_family(is_http=False):
     """
     使用百度api或保存的json文件，生成所选文件夹（一般为"02电子档案"）中每个家庭对应的字典，
@@ -288,7 +298,7 @@ def get_family(is_http=False):
             dict_id_card = get_dict_from_json_file(os.path.join(full_path, '1-1身份证明.jpg'))
         # hh_name = get_atr(dict_id_card, '姓名')
         hh_id = get_atr(dict_id_card, '公民身份号码')
-        family_dict = {'权利人姓名': name_right_man, '宗地号': code_parcel, '权利人证件编号': hh_id, '权利人关系': None}
+        family_dict = {'权利人姓名': name_right_man, '宗地号': code_parcel, '权利人证件编号': hh_id, '权利人关系': '无'}
         members_list = {}
         count = 0
         if os.path.isdir(full_path):
@@ -301,7 +311,7 @@ def get_family(is_http=False):
                 file = files[index]
                 if '户口本.jpg' in file:
                     print(file)
-                    count += 1
+
                     f_file = os.path.join(full_path, file)
                     if is_http:
                         dict_a = get_householder_book(f_file, fetch_token())
@@ -310,14 +320,14 @@ def get_family(is_http=False):
                     dict_member = get_one_dict(dict_a)
                     if dict_member.get('姓名') is not None and dict_member.get('关系') is not None and dict_member.get(
                             '身份证号码') is not None and len(dict_member.get('身份证号码')) > 10:
-
+                        count += 1
                         members_list.append(dict_member)
                         print("dict_member.get姓名", dict_member.get("姓名"))
                         print('name_right_man', name_right_man)
                         if dict_member.get('姓名') == name_right_man:
                             family_dict['权利人关系'] = dict_member.get('关系')
                     else:
-                        msg_error.append('{} 户口本识别错误'.format(f_file))
+                        msg_error.append('{} 户口本识别错误'.format(get_code_name_number(f_file)))
                         print('成员错误', f_file)
         if count < 1:
             print('when count < 1: ', name_right_man)
@@ -334,6 +344,7 @@ def get_family(is_http=False):
         json.dump(family_dict, out_file, indent=6, ensure_ascii=False)
         mylist.append(family_dict)
         out_file.close()
+        write_error_msg(msg_error, os.path.join(r'识别错误信息.txt'))
     print('获取信息完成')
     return mylist, string
 
