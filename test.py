@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import datetime
+import json
 import os
 import re
 from tkinter import filedialog
@@ -46,12 +47,23 @@ if __name__ == '__main__':
     #
     #     f.write('hello' + '\n')
 
-    print('hello')
-    path = r'E:/照片核对/礼亭4/02电子档案\110000001001JC00001郭团结\2-1户口本.jpg'
-    l1 = os.path.split(path)
-    print(l1)
-    l2 = os.path.split(l1[0])
-    print(l2[1][14:] + ' ' + l1[1])
+    # print('hello')
+    # path = r'E:/照片核对/礼亭4/02电子档案\110000001001JC00001郭团结\2-1户口本.jpg'
+    # l1 = os.path.split(path)
+    # print(l1)
+    # l2 = os.path.split(l1[0])
+    # print(l2[1][14:] + ' ' + l1[1])
+    #
+    # code_and_name = os.path.split(os.path.split(path)[0])[1][14:] + os.path.split(path)[1]
+    # print(code_and_name)
 
-    code_and_name = os.path.split(os.path.split(path)[0])[1][14:] + os.path.split(path)[1]
-    print(code_and_name)
+    # my_dict = {('子', '妻'): '母亲'}
+    #
+    # print(my_dict.get(('子', '妻')))
+    #
+    # print(json.dumps(my_dict))
+
+    path = r'ddadf\daa\333/挂接表.xlsx'
+
+    new = os.path.splitext(path)[0] + 'new.xlsx'
+    print(new)

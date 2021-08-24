@@ -18,7 +18,7 @@ from tkinter import filedialog
 from pandas import DataFrame
 
 import ocr_id
-from parcel_property_sheet import get_max_row
+from parcel_property_sheet import get_max_row, simple_entry
 
 msg_error = []
 
@@ -158,6 +158,7 @@ class App(tk.Tk):
     sample_path = ''
     out_path = ''
     json_dir = ''
+    village_name = ''
 
     def __init__(self, sample_path, out_path):
         super().__init__()
@@ -166,11 +167,13 @@ class App(tk.Tk):
         self.out_path = out_path
 
         def ocr_to_list():
-            self.list_families = ocr_id.get_family(True)
+            self.village_name = entry_village_group.get()
+            self.list_families = ocr_id.get_family(self.village_name, True)
             self.json_dir = self.list_families[1]
 
         def json_to_list():
-            self.list_families = ocr_id.get_family(False)
+            self.village_name = entry_village_group.get()
+            self.list_families = ocr_id.get_family(self.village_name, False)
             self.json_dir = self.list_families[1]
 
         def list_to_excel(is_choose=False):
@@ -199,6 +202,8 @@ class App(tk.Tk):
         # def json_on_text():
         #     for family in self.list_families:
         #         text1.insert('end', family)
+
+        entry_village_group = simple_entry(self, '村小组名称')
 
         tk.Button(self, text="OCR识别", command=ocr_to_list).pack()
         tk.Button(self, text="本地数据", command=json_to_list).pack()

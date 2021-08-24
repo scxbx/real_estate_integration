@@ -336,9 +336,9 @@ def relation_solu():
 
     relation_error_index = 0
     for hu in leader_relation:
-        relation_error_index = relation_error_index + 1
+
         if hu[0] == "户主":  # 第一层判断：如果权利人是户主就直接跳过   ,hu[应该是权利人]
-            continue
+            pass
         else:
             '''下面是大批量判断部分：'''
             if hu[0] == "父亲" or hu[0] == "父":  # 0
@@ -351,19 +351,21 @@ def relation_solu():
                 obligee_is_xiongdi(relation[relation_error_index])
             elif hu[0] == "姐妹":
                 obligee_is_jiemei(relation[relation_error_index])
-            elif hu[0] == "儿子" or hu[0] == "长子":
+            elif hu[0] == "儿子":
+                # print('到长子 index: {}, leader relation: {}, leader_relation[relation_error_index]: {}'.format(relation_error_index, hu, leader_relation[relation_error_index]))
                 obligee_is_erzi(relation[relation_error_index])
             elif hu[0] == "女儿":
                 obligee_is_nver(relation[relation_error_index])
             elif hu[0] == "孙子":
                 obligee_is_sunzi(relation[relation_error_index])
             else:
-                continue
-
+                pass
+        relation_error_index = relation_error_index + 1
     print()
 
+
 def match_ref(ref_path, txt_path):
-    '''将嵌套列表变成一维列表'''
+    """将嵌套列表变成一维列表"""
     idcard_1 = list(itertools.chain.from_iterable(idcard))  # idcard_1 代表一维的列表
     leader_name_1 = list(itertools.chain.from_iterable(leader_name))
     member_name_1 = list(itertools.chain.from_iterable(member_name))
@@ -428,12 +430,44 @@ def write_to_txt(path, list_d, list_l):
             f.write(lack + '\n')
 
 
+def print_index_item(my_list):
+    for index, item in enumerate(my_list):
+        print("index: {}, relation: {}".format(index, item))
+
+
+def relation_solu2():
+    my_dict = {('子', '妻'): '母亲'}
+    for i in range(len(leader_relation)):
+        my_leader_relation = leader_relation[i][0]
+        if my_leader_relation == '户主':
+            pass
+        else:
+            for j in range(len(relation[i])):
+                my_relation = relation[i][j]
+                if my_relation == '户主':
+                    re
+                new_relation = my_dict.get((my_leader_relation, my_relation))
+                if new_relation is not None:
+                    relation[i][j] = new_relation
+
+
+
 if __name__ == '__main__':
     print('Hello world!')
-    info_basic_out(r'C:\Users\sc\Documents\飞行者科技\房地一体\各种测试\关系')
-    print("relation1", relation)
-    relation_solu()
-    print("relation2", relation)
-    match_ref(r'refsrc.xlsx')
+    # info_basic_out(r'C:\Users\sc\PycharmProjects\real_estate_integration\json\老庆园')
+    # print("relation1", relation)
+    # print_index_item(relation)
+    # relation_solu()
+    # print_index_item(relation)
+    # #
+    # print_index_item(leader_relation)
+
+    info_basic_out(r'test')
+    print(leader_relation)
+    print(relation)
+    relation_solu2()
+    print('after change')
+    print(leader_relation)
+    print(relation)
 
 

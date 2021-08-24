@@ -263,12 +263,13 @@ def get_code_name_number(path):
     return os.path.split(os.path.split(path)[0])[1][14:] + ' ' + os.path.split(path)[1]
 
 
-def get_family(is_http=False):
+def get_family(village_name, is_http=False):
     """
     使用百度api或保存的json文件，生成所选文件夹（一般为"02电子档案"）中每个家庭对应的字典，
     并将各个字典以json形式保存在程序根目录中，然后将字典组成数字。
     如果使用百度api，还会将接收的原始json文件保存在json文件夹中（一般为"02电子档案json"）
 
+    :param village_name: 村小组名称
     :param is_http: 是否使用百度api。若为否，则读取选择的图片文件夹所对应的json文件夹中的json文件
     :return: 一个数组，每个元素都是一个家庭的字典
     """
@@ -278,7 +279,7 @@ def get_family(is_http=False):
     mylist = []
     count_family = 0
     create_time = datetime.datetime.now()
-    string = create_time.strftime("%Y-%m-%d %H-%M-%S")
+    string = village_name + create_time.strftime("%Y-%m-%d %H-%M-%S")
     access_token = fetch_token()
     # print('ocr_id.dir_list', dir_list)
 
@@ -344,15 +345,19 @@ def get_family(is_http=False):
         json.dump(family_dict, out_file, indent=6, ensure_ascii=False)
         mylist.append(family_dict)
         out_file.close()
-        write_error_msg(msg_error, os.path.join(r'识别错误信息.txt'))
+        path_results = os.path.join('结果', string)
+        if not os.path.exists(path_results):
+            os.makedirs(path_results)
+        write_error_msg(msg_error, os.path.join(path_results, r'识别错误信息.txt'))
     print('获取信息完成')
     return mylist, string
 
 
-def get_family_id_card_only(is_http=False):
+def get_family_id_card_only(village_name, is_http=False):
     """
     类似于get_family(is_http=False)，但只指挥获取身份证信息，字典和json文件也有所不同。
 
+    :param village_name: 村小组名称
     :param is_http: is_http: 是否使用百度api。若为否，则读取选择的图片文件夹所对应的json文件夹中的json文件
     :return: 一个数组，每个元素都是一个家庭的字典（没有名为"家庭成员"的key）
     """
@@ -362,7 +367,7 @@ def get_family_id_card_only(is_http=False):
     mylist = []
     count_family = 0
     create_time = datetime.datetime.now()
-    string = create_time.strftime("%Y-%m-%d %H-%M-%S")
+    string = village_name + create_time.strftime("%Y-%m-%d %H-%M-%S")
 
     for m_dir in dir_list:
         count_family += 1
