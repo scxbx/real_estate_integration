@@ -2,7 +2,7 @@
 
 #### deal_with_data.py
 
-![deal_with_data](.\pictures\deal_with_data.PNG)
+<img src=".\pictures\deal_with_data.PNG" alt="deal_with_data.py" style="zoom:80%;" />
 
 
 
