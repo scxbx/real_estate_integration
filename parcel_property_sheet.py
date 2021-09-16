@@ -1,6 +1,7 @@
 import datetime
+import json
 import os
-from tkinter import filedialog
+from tkinter import filedialog, ttk
 from tkinter import messagebox
 import openpyxl
 import tkinter as tk
@@ -94,7 +95,7 @@ def get_from_info(aip):
     return ai_dict
 
 
-def fill_parcel_table(ppp, ai_dict, para_list, json_path, images_path, use_ocr=False,):
+def fill_parcel_table(ppp, ai_dict, para_list, json_path, images_path, use_ocr=False, ):
     """
     填单个宗地属性表
 
@@ -194,8 +195,8 @@ def fill_parcel_table(ppp, ai_dict, para_list, json_path, images_path, use_ocr=F
         o = '陵水黎族自治县' + j + k + field_l
         pps.cell(cur_row, 15).value = o
 
-        # 根据【镇】、【村】、【组名】填写【所有权权利人】
-        p = field_l + '村民小组'
+        # 根据【镇】、【村】、【组名】填写【所有权权利人】 【组名】+"经济合作社农民集体"
+        p = field_l + '经济合作社农民集体'
         pps.cell(cur_row, 16).value = p
 
         # 根据照片/填写【证件编号】 注意：无论权利人数量多少，都只填入1-1的身份证号，需要人工调整
@@ -206,7 +207,6 @@ def fill_parcel_table(ppp, ai_dict, para_list, json_path, images_path, use_ocr=F
             # print('t', t)
             pps.cell(cur_row, 20).value = t
             if not is_valid_idcard(t):
-
                 q = pps.cell(cur_row, 17).value  # Q: 权利人姓名
                 f = pps.cell(cur_row, 6).value  # F: 宗地顺序号
                 list_id_error.append("{} {} {}".format(q, f, t))
@@ -331,10 +331,10 @@ def fill_parcel_table(ppp, ai_dict, para_list, json_path, images_path, use_ocr=F
         # 填写实际用途 AD 30  填入固定值0702
         pps.cell(cur_row, 30).value = '0702'
 
-        # 根据【权利人姓名Q17】填写【项目名称CN92】	填写【权利人姓名】+“自建房”
+        # 根据【权利人姓名Q17】填写【项目名称CN92】	填写【权利人姓名】+“农房”
         q = get_cell(17)
         cn = q if q is not None else ''
-        cn = cn + '自建房'
+        cn = cn + '农房'
         update_cell(92, cn)
 
         # 填写【项目性质CO93】	填写 农民自有房屋建设
@@ -368,7 +368,7 @@ def fill_parcel_table(ppp, ai_dict, para_list, json_path, images_path, use_ocr=F
 
         # 根据/02电子档案内的照片填写【宗地归档CU99】
         # 填写文件夹内所有照片的文件名（含后缀名），按顺序（1-1、2-X、4-X）,每个名字用英文分号 ; 隔开
-        i = get_cell(9)     # 宗地代码I9
+        i = get_cell(9)  # 宗地代码I9
         if image_name_dict is None:
             in_image_file_dict = None
         else:
@@ -550,9 +550,9 @@ def fill_house_table(hpp, para_list):
                 print('共有情况既不为共同所有，也不为单独所有，共有方式填入默认值0。row:', c_row)
             update_cell(16, p)
 
-            # 根据【房屋所有权人I9】填写【项目名称Q17】	【房屋所有权人】+自建房
+            # 根据【房屋所有权人I9】填写【项目名称Q17】	【房屋所有权人】+农房
 
-            q = i + '自建房'
+            q = i + '农房'
             update_cell(17, q)
 
         # 填写【产别S19】	填写 30
@@ -575,18 +575,19 @@ def fill_house_table(hpp, para_list):
         al = 100
         update_cell(38, al)
 
-        # 填写【墙体归属AM39 AN40 AO41 AP42】	东南西北均填写 10
+        # 填写【墙体归属AM39 AN40 AO41 AP42】	东南西北 原为批量填写10，现改为空值才填写"10"
         am, an, ao, ap = 10, 10, 10, 10
         wall_list = [am, an, ao, ap]
         for iw in range(0, 4):
-            update_cell(iw + 39, wall_list[iw])
+            if get_cell(iw + 39) is None:
+                update_cell(iw + 39, wall_list[iw])
 
         # 填写【是否核查AR44】	填写 1
         ar = 1
         update_cell(44, ar)
 
-        # 填写【调查意见AT46】	填写 合格
-        at = '合格'
+        # 填写【调查意见AT46】	填写 房籍调查结果合格。
+        at = '房籍调查结果合格。'
         update_cell(46, at)
 
         # 根据输入/输入表格填写【调查员AU47 para_list[1]】、【调查日期AV48 para_list[2]】	填写与宗地表相同的【调查员】、【调查日期】
@@ -605,8 +606,6 @@ def fill_house_table(hpp, para_list):
             later_date = get_later_date(get_cell(33), complete_time_dict[get_cell(2)])
             complete_time_dict[get_cell(2)] = later_date
 
-        # 填写【调查意见】	填写 该宗地经实地调查测量核实，权属界线清楚，符合规划，权属来源材料合法，四邻确认无异议。
-        update_cell(46, '该宗地经实地调查测量核实，权属界线清楚，符合规划，权属来源材料合法，四邻确认无异议。')
     hpb.save(hpp)
     hpb.close()
     return
@@ -718,6 +717,22 @@ def simple_entry(master, label_text):
     return entry
 
 
+def simple_combobox(master, label_text, value_list):
+    frame = tk.Frame(master)
+    label = tk.Label(frame, text=label_text)
+    label.pack(side=tk.LEFT)
+    com = ttk.Combobox(frame, state="readonly", values=value_list)  # #创建下拉菜单
+    com.pack(side=tk.RIGHT)  # #将下拉菜单绑定到窗体
+    com.current(0)  # #设定下拉菜单的默认值为第0个
+
+    def xFunc(event):
+        print(com.get())  # #获取选中的值方法1
+
+    com.bind("<<ComboboxSelected>>", xFunc)  # #给下拉菜单绑定事件
+    frame.pack()
+    return com
+
+
 IDCARD_REGEX = '[1-9][0-9]{14}([0-9]{2}[0-9X])?'
 
 
@@ -776,6 +791,7 @@ def sort_img_name(a_list):
 
     :param a_list: 要排序的数组
     """
+
     def takSecond(item):
         string = re.match('(.*)-(.*)房屋照片.jpg', item).group(2)
         return int(string)
@@ -796,6 +812,20 @@ def convert_to_number(letter, column_a=1):
         w *= 26
         w += ab.find(_)
     return w - 1 + column_a
+
+
+def next_day(date_string):
+    from datetime import datetime
+    from datetime import timedelta
+    datetime_obj = datetime.strptime(date_string, '%Y-%m-%d').date()
+    tomorrow = datetime_obj + timedelta(days=1)
+    return str(tomorrow)
+
+
+def json_to_dict(path):
+    with open(r'默认表格\config.txt', encoding='utf-8') as f:
+        content = json.loads(f.read())
+        return content
 
 
 class App(tk.Tk):
@@ -888,30 +918,37 @@ class App(tk.Tk):
 
         tk.Button(self, text="路径选择", command=selectPath_json).pack()
 
-
-
         # 组名    para_list[0]
         entry_village_group = simple_entry(self, '组名')
         # 调查员   para_list[1]
-        entry_investigator = simple_entry(self, '调查员')
+        # entry_investigator = simple_entry(self, '调查员')
+        config_dict = json_to_dict(r'默认表格\config.txt')
+        com_investigator = simple_combobox(self, '调查员', config_dict.get('调查员'))
         # 调查日期  para_list[2]
         entry_invest_date = simple_entry(self, '调查日期(yyyy-mm-dd)')
         # 测量人   para_list[3]
-        entry_surveyor = simple_entry(self, '测量人')
+        # entry_surveyor = simple_entry(self, '测量人')
+        com_surveyor = simple_combobox(self, '测量人', config_dict.get('测量人'))
         # 测量日期  para_list[4]
-        entry_survey_date = simple_entry(self, '测量日期(yyyy-mm-dd)')
+        # entry_survey_date = simple_entry(self, '测量日期(yyyy-mm-dd)')
         # 调查审核日期    para_list[5]
-        entry_review_date = simple_entry(self, '调查审核日期(yyyy-mm-dd)')
+        # entry_review_date = simple_entry(self, '调查审核日期(yyyy-mm-dd)')
         # 地籍号差值     para_list[6]
         entry_land_num_dif = simple_entry(self, '地籍号差值')
 
         def btn_generator_CallBack():
             village_group = entry_village_group.get()
-            investigator = entry_investigator.get()
+            investigator = com_investigator.get()
             invest_date = entry_invest_date.get()
-            surveyor = entry_surveyor.get()
-            survey_date = entry_survey_date.get()
-            review_date = entry_review_date.get()
+            surveyor = com_surveyor.get()
+            survey_date = invest_date
+
+            try:
+                review_date = next_day(invest_date)
+            except ValueError as e:
+                tk.messagebox.showerror(title="错误", message="日期格式错误")
+                print(e.args)
+                return
             land_num_dif = entry_land_num_dif.get()
 
             para_list = [village_group,

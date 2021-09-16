@@ -1,9 +1,6 @@
 import os
 from tkinter import filedialog
-
 from openpyxl import load_workbook
-
-import parcel_property_sheet
 from parcel_property_sheet import get_max_row
 
 

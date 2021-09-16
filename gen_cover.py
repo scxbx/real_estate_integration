@@ -1,6 +1,14 @@
 import openpyxl
-from parcel_property_sheet import get_max_row
+
 import os
+
+
+def get_max_row(sheet):
+    """
+        获取工作表的最大行数
+    """
+    max_row = len([row for row in sheet if not all([cell.value is None for cell in row])])
+    return max_row
 
 
 def multi_cover(path, info, new_path):
@@ -38,7 +46,7 @@ def single_cover(wb, one_cover_list, sheet_name):
 
 def get_info(path):
     wb = openpyxl.load_workbook(path, data_only=True)
-    ws = wb.active
+    ws = wb['Sheet1']
 
     max_row = get_max_row(ws)
 

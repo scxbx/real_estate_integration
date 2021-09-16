@@ -2,23 +2,21 @@
 
 # coding=gbk
 import os
-
-import pandas as pd
+import threading
 
 import check_id
 import json
 import openpyxl
 import jsonToExcel
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 
 # df = pd.read_json('1.json')
 
 # print(df)
-from pandas import DataFrame
 
 import ocr_id
-from parcel_property_sheet import get_max_row, simple_entry
+from parcel_property_sheet import simple_entry
 
 msg_error = []
 
@@ -146,6 +144,18 @@ def write_error_msg(alist, apath):
             f.write(i + '\n')
 
 
+def switch_off(btn_list):
+    for btn in btn_list:
+        if btn['state'] == 'normal':
+            btn['state'] = 'disabled'
+
+
+def switch_on(btn_list):
+    for btn in btn_list:
+        if btn['state'] == 'disabled':
+            btn['state'] = 'normal'
+
+
 class App(tk.Tk):
     """
         使用tk的简单gui。用于：
@@ -159,56 +169,46 @@ class App(tk.Tk):
     out_path = ''
     json_dir = ''
     village_name = ''
+    btn_ocr = None
+    btn_local = None
+    btn_local_json = None
+    btn_write = None
+    btn_write_choose = None
 
     def __init__(self, sample_path, out_path):
         super().__init__()
-        self.title('开发版')
+        self.title('飞行者OCR识别填表工具')
+        self.geometry('360x{}'.format(self.winfo_reqheight()))
         self.sample_path = sample_path
         self.out_path = out_path
 
-        def ocr_to_list():
-            self.village_name = entry_village_group.get()
-            self.list_families = ocr_id.get_family(self.village_name, True)
-            self.json_dir = self.list_families[1]
+        self.entry_village_group = simple_entry(self, '村小组名称')
 
-        def json_to_list():
-            self.village_name = entry_village_group.get()
-            self.list_families = ocr_id.get_family(self.village_name, False)
-            self.json_dir = self.list_families[1]
+        self.btn_ocr = tk.Button(self, width="20", text="OCR识别", pady=4,
+                                 command=lambda: self.thread_it(self.ocr_to_list))
+        self.btn_local = tk.Button(self, width="20", text="本地数据", pady=4, command=self.json_to_list)
+        self.btn_local_json = tk.Button(self, width="20", text="本地数据json", pady=4, command=self.direct_json_to_list)
+        self.btn_write = tk.Button(self, width="20", text="写入excel", pady=4,
+                                   command=self.list_to_excel, state='disabled')
+        self.btn_write_choose = tk.Button(self, width="20", pady=4, text="选取文件夹并写入excel",
+                                          command=self.list_to_excel_choose)
 
-        def list_to_excel(is_choose=False):
-            print(self.json_dir)
-            path_time = os.path.join('结果', self.json_dir)
-            if not os.path.exists(path_time):
-                os.makedirs(path_time)
-            # my_json_path = r'C:\Users\sc\PycharmProjects\real_estate_integration\2021-08-19 09-31-12'
-            if is_choose:
-                my_json_path = filedialog.askdirectory()
-            else:
-                my_json_path = os.path.join('json', self.json_dir)
-            print(my_json_path)
-            jsonToExcel.info_basic_out(my_json_path)
-            if os.path.exists(r'refsrc.xlsx'):
-                jsonToExcel.match_ref(r'refsrc.xlsx', os.path.join(path_time, '家庭成员核查反馈.txt'))
+        self.btn_ocr.pack()
+        self.btn_local.pack()
+        self.btn_local_json.pack()
+        self.btn_write.pack()
+        self.btn_write_choose.pack()
 
-            # jsonToExcel.relation_solu()
+        # WM_DELETE_WINDOW 不能改变，这是捕获命令
+        self.protocol('WM_DELETE_WINDOW', self.on_closing)
 
-            write_into_excel(self.sample_path, os.path.join(path_time, '挂接表.xlsx'))
-            check_id.write_id_error_file(os.path.join(path_time, '家庭成员核查反馈.txt'))
-
-        def list_to_excel_choose():
-            list_to_excel(True)
-
-        # def json_on_text():
-        #     for family in self.list_families:
-        #         text1.insert('end', family)
-
-        entry_village_group = simple_entry(self, '村小组名称')
-
-        tk.Button(self, text="OCR识别", command=ocr_to_list).pack()
-        tk.Button(self, text="本地数据", command=json_to_list).pack()
-        tk.Button(self, text="写入excel", command=list_to_excel).pack()
-        tk.Button(self, text="选取文件夹并写入excel", command=list_to_excel_choose).pack()
+        # # menu
+        # menuBar = tk.Menu(self)
+        # helpMenu = tk.Menu(menuBar, tearoff=0)
+        # helpMenu.add_command(label="关于")
+        # helpMenu.add_command(label="帮助")
+        # menuBar.add_cascade(label='Help', menu=helpMenu)
+        # self.config(menu=menuBar)
         # text1 = tk.Text(self, width=65, height=30)
         #
         # scroll = tk.Scrollbar()
@@ -220,6 +220,73 @@ class App(tk.Tk):
         # text1.config(yscrollcommand=scroll.set)  # 将滚动条关联到文本框
         #
         # text1.pack()
+
+    # def new_line(self):
+    #     tk.Label(self, text='\n').pack()
+
+    def on_closing(self):
+        if messagebox.askokcancel("退出", "是否确认退出程序?"):
+            self.destroy()
+
+    def ocr_to_list(self):
+        # before ocr, disable the ocr button
+        btn_to_switch_off = [self.btn_ocr, self.btn_write_choose, self.btn_local, self.btn_local_json, self.btn_write]
+        btn_to_switch_on = [self.btn_ocr, self.btn_write_choose, self.btn_local, self.btn_local_json]
+        switch_off(btn_to_switch_off)
+        self.village_name = self.entry_village_group.get()
+        self.list_families = ocr_id.get_family(self.village_name, True)
+        self.json_dir = self.list_families[1] if self.list_families is not None else ''
+        self.btn_write['state'] = 'normal' if self.list_families is not None else 'disabled'
+        switch_on(btn_to_switch_on)
+
+    def json_to_list(self):
+        self.village_name = self.entry_village_group.get()
+        self.list_families = ocr_id.get_family(self.village_name, False)
+        self.json_dir = self.list_families[1] if self.list_families is not None else ''
+        self.btn_write['state'] = 'normal' if self.list_families is not None else 'disabled'
+
+    def direct_json_to_list(self):
+        self.village_name = self.entry_village_group.get()
+        self.list_families = ocr_id.get_family_from_json_folder(self.village_name)
+        self.json_dir = self.list_families[1] if self.list_families is not None else ''
+        self.btn_write['state'] = 'normal' if self.list_families is not None else 'disabled'
+
+    def list_to_excel(self, is_choose=False):
+        print(self.json_dir)
+        if self.json_dir == '' and not is_choose:
+            print('使用本功能（写入excel）前，请先使用 ocr识别、本地数据或本地数据json')
+            return
+        path_time = os.path.join('结果', self.json_dir)
+        if not os.path.exists(path_time):
+            os.makedirs(path_time)
+        # my_json_path = r'C:\Users\sc\PycharmProjects\real_estate_integration\2021-08-19 09-31-12'
+        if is_choose:
+            to_print = '选择文件夹并写入excel: 请选择本软件[json]文件夹下对应的子文件夹'
+            my_json_path = filedialog.askdirectory(title=to_print, initialdir='json')
+            if my_json_path == '':
+                print(to_print)
+                return
+        else:
+            my_json_path = os.path.join('json', self.json_dir)
+        print(my_json_path)
+        jsonToExcel.info_basic_out(my_json_path)
+        if os.path.exists(r'refsrc.xlsx'):
+            jsonToExcel.match_ref(r'refsrc.xlsx', os.path.join(path_time, '家庭成员核查反馈.txt'))
+
+        # jsonToExcel.relation_solu()
+
+        write_into_excel(self.sample_path, os.path.join(path_time, '挂接表.xlsx'))
+        check_id.write_id_error_file(os.path.join(path_time, '家庭成员核查反馈.txt'))
+
+    def list_to_excel_choose(self):
+        self.list_to_excel(True)
+
+    @staticmethod
+    def thread_it(func, *args):
+        t = threading.Thread(target=func, args=args)
+        t.setDaemon(True)  # 守护--就算主界面关闭，线程也会留守后台运行（不对!）
+        t.start()  # 启动
+        # t.join()          # 阻塞--会卡死界面！
 
 
 if __name__ == '__main__':

@@ -1,9 +1,10 @@
 #!/usr/bin/python
-import datetime
+from datetime import datetime
+from datetime import timedelta
+
 import json
 import os
 import re
-from tkinter import filedialog
 
 # line = "Cats are smarter than dogs"
 # matchObj = re.match(r'(.*) are (.*?) .*', line, re.M | re.I)
@@ -19,6 +20,7 @@ import deal_with_data
 import jsonToExcel
 import ocr_id
 import parcel_property_sheet
+import tkinter.filedialog
 
 
 def sum_dict(a, b):
@@ -63,7 +65,17 @@ if __name__ == '__main__':
     #
     # print(json.dumps(my_dict))
 
-    path = r'ddadf\daa\333/挂接表.xlsx'
+    # path = r'ddadf\daa\333/挂接表.xlsx'
+    #
+    # new = os.path.splitext(path)[0] + 'new.xlsx'
+    # print(new)
+    #
+    # tkinter.filedialog.askdirectory()
 
-    new = os.path.splitext(path)[0] + 'new.xlsx'
-    print(new)
+    with open(r'默认表格\config.txt', encoding='utf-8') as f:
+        content = json.loads(f.read())
+
+    print(content.get('调查员'))
+    print(content.get('测量人'))
+    print(type(content))
+

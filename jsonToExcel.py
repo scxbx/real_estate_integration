@@ -1,17 +1,16 @@
 # coding=utf-8
 # !/usr/bin/env python
 
-import sys
 
 import pandas as pd
 import json
 
 import os.path
-import re
+
 import itertools
+
 # df = pd.read_json('1.json')
 
-from pandas import DataFrame
 
 # pathDir = os.listdir('C:/Users/liuff19/Desktop/json')  # 索引json的文件夹
 
@@ -47,6 +46,7 @@ def sort_file_name(a_list):
 
     :param a_list: 要排序的数组
     """
+
     def take_first(item):
         string = item.split('.')[0]
         return int(string)
@@ -90,6 +90,37 @@ def info_basic_out(path):  # path 是只存放json文件的文件夹路径
 
             '''家庭总人数'''
             fam.append([len(df)] * len(df))
+
+
+def info_basic_out_db(data):
+    df = pd.json_normalize(
+        data,
+        meta=['权利人姓名', '宗地号', '权利人证件编号', '权利人关系'],
+        record_path=['家庭成员'])
+
+    '''户内成员姓名'''
+    member_name.append(list(df.iloc[:, 0].values))
+
+    '''与户主的关系'''
+    relation.append(list(df.iloc[:, 1].values))
+
+    '''权利人姓名'''
+    leader_name.append(list(df.iloc[:, 3].values))
+
+    '''权利人关系'''
+    leader_relation.append(list(df.iloc[:, 6].values))
+
+    '''身份证号码'''
+    idcard.append(list(df.iloc[:, 2].values))
+
+    '''宗地号码'''
+    zong_num.append(list(df.iloc[:, 4].values))
+
+    '''权利人证件编号'''
+    leader_id.append(list(df.iloc[:, 5].values))
+
+    '''家庭总人数'''
+    fam.append([len(df)] * len(df))
 
 
 def obligee_is_fumu(h):  # 当权利人是户主的父亲、母亲时
@@ -333,7 +364,6 @@ def obligee_is_sunzi(h):  # 当权利人是户主的孙子时
 
 
 def relation_solu():
-
     relation_error_index = 0
     for hu in leader_relation:
 
@@ -379,7 +409,6 @@ def match_ref(ref_path, txt_path):
     list_lack = [msg_lack]
     list_id_error = []
 
-
     '''对比数据部分'''
     refdata = pd.read_excel(ref_path)
 
@@ -397,7 +426,7 @@ def match_ref(ref_path, txt_path):
 
     print('ref_dict', ref_dict)
 
-    for i in range(len(idcard)):        # print(idcard[i])
+    for i in range(len(idcard)):  # print(idcard[i])
         for j in range(len(idcard[i])):
             ref_name = ref_dict.get(idcard[i][j])
             if ref_name is not None:
@@ -435,21 +464,20 @@ def print_index_item(my_list):
         print("index: {}, relation: {}".format(index, item))
 
 
-def relation_solu2():
-    my_dict = {('子', '妻'): '母亲'}
-    for i in range(len(leader_relation)):
-        my_leader_relation = leader_relation[i][0]
-        if my_leader_relation == '户主':
-            pass
-        else:
-            for j in range(len(relation[i])):
-                my_relation = relation[i][j]
-                if my_relation == '户主':
-                    re
-                new_relation = my_dict.get((my_leader_relation, my_relation))
-                if new_relation is not None:
-                    relation[i][j] = new_relation
-
+# def relation_solu2():
+#     my_dict = {('子', '妻'): '母亲'}
+#     for i in range(len(leader_relation)):
+#         my_leader_relation = leader_relation[i][0]
+#         if my_leader_relation == '户主':
+#             pass
+#         else:
+#             for j in range(len(relation[i])):
+#                 my_relation = relation[i][j]
+#                 if my_relation == '户主':
+#                     re
+#                 new_relation = my_dict.get((my_leader_relation, my_relation))
+#                 if new_relation is not None:
+#                     relation[i][j] = new_relation
 
 
 if __name__ == '__main__':
@@ -461,13 +489,11 @@ if __name__ == '__main__':
     # print_index_item(relation)
     # #
     # print_index_item(leader_relation)
-
-    info_basic_out(r'test')
-    print(leader_relation)
-    print(relation)
-    relation_solu2()
-    print('after change')
-    print(leader_relation)
-    print(relation)
-
-
+    #
+    # info_basic_out(r'test')
+    # print(leader_relation)
+    # print(relation)
+    # relation_solu2()
+    # print('after change')
+    # print(leader_relation)
+    # print(relation)

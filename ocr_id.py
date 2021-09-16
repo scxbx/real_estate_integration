@@ -235,13 +235,16 @@ def get_atr(dict_a, string):
         return dict_a.get('words_result').get(string).get(words)
 
 
-def get_dict_from_json_file(path):
+def get_dict_from_json_file(path, need_replace=True):
     """
     从路径为path的json文件中，载入并返回字典。如果路径不存在，返回None
+    :param need_replace: 是否需要替换jpg为json 默认为True
     :param path:json文件的路径
     :return:路径存在时返回字典，不存时返回None
     """
-    path = filename_jpg_to_json(path)
+    if need_replace:
+        path = filename_jpg_to_json(path)
+
     print('get_dict_from_json_file.path', path)
     if not os.path.exists(path):
         print('没有' + path)
@@ -274,7 +277,11 @@ def get_family(village_name, is_http=False):
     :return: 一个数组，每个元素都是一个家庭的字典
     """
     string = ''
-    pathA = filedialog.askdirectory()
+    to_print = 'ocr识别：请选择[02电子档案]文件夹' if is_http else '本地数据：请选择[02电子档案]文件夹'
+    pathA = filedialog.askdirectory(title=to_print)
+    if pathA == '':
+        print(to_print)
+        return None
     dir_list = os.listdir(pathA)
     mylist = []
     count_family = 0
@@ -400,6 +407,90 @@ def get_family_id_card_only(village_name, is_http=False):
             json.dump(family_dict, out_file, indent=6, ensure_ascii=False)
             mylist.append(family_dict)
             out_file.close()
+    print('获取信息完成')
+    return mylist, string
+
+
+def get_family_from_json_folder(village_name):
+    """
+    通过选择原始json文件夹，生成家庭的字典
+
+    :param village_name: 村小组的名称
+    :return: (家庭的字典, 创建时间的字符串)
+    """
+    to_print = '本地数据json：请选择[02电子档案json]文件夹'
+    pathA = filedialog.askdirectory(title=to_print)
+    if pathA == '':
+        print(to_print)
+        return None
+    dir_list = os.listdir(pathA)
+    mylist = []
+    count_family = 0
+    create_time = datetime.datetime.now()
+    string = village_name + create_time.strftime("%Y-%m-%d %H-%M-%S")
+
+    for m_dir in dir_list:
+        count_family += 1
+        full_path = os.path.join(pathA, m_dir)
+        code_parcel = m_dir[0:19]
+        name_right_man = m_dir[19:]
+
+        dict_id_card = get_dict_from_json_file(os.path.join(full_path, '1-1身份证明.json'), need_replace=False)
+        hh_id = get_atr(dict_id_card, '公民身份号码')
+        family_dict = {'权利人姓名': name_right_man, '宗地号': code_parcel, '权利人证件编号': hh_id, '权利人关系': '无'}
+        members_list = {}
+        count = 0
+
+        if os.path.isdir(full_path):
+            print(full_path)
+            files = os.listdir(full_path)
+            members_list = []
+
+            if os.path.isdir(full_path):
+                print(full_path)
+                files = os.listdir(full_path)
+                members_list = []
+
+                for index in range(len(files)):
+                    file = files[index]
+                    if '户口本.json' in file:
+                        print(file)
+                        f_file = os.path.join(full_path, file)
+                        dict_a = get_dict_from_json_file(f_file, need_replace=False)
+                        dict_member = get_one_dict(dict_a)
+
+                        if dict_member.get('姓名') is not None and dict_member.get('关系') is not None and dict_member.get(
+                                '身份证号码') is not None and len(dict_member.get('身份证号码')) > 10:
+                            count += 1
+                            members_list.append(dict_member)
+                            print("dict_member.get姓名", dict_member.get("姓名"))
+                            print('name_right_man', name_right_man)
+                            if dict_member.get('姓名') == name_right_man:
+                                family_dict['权利人关系'] = dict_member.get('关系')
+                        else:
+                            msg_error.append('{} 户口本识别错误'.format(get_code_name_number(f_file)))
+                            print('成员错误', f_file)
+
+        if count < 1:
+            print('when count < 1: ', name_right_man)
+            members_list.append({"姓名": name_right_man, "关系": None, "身份证号码": hh_id})
+            msg_error.append('{} 没有有效户口本'.format(full_path))
+
+        family_dict['家庭成员'] = members_list
+        family_dict['家庭总人数'] = len(members_list)
+
+        time_path = os.path.join("json", string)
+        if not os.path.exists(time_path):
+            os.makedirs(time_path)
+        out_file = open(os.path.join(time_path, str(count_family) + '.json'), "w")
+        json.dump(family_dict, out_file, indent=6, ensure_ascii=False)
+        mylist.append(family_dict)
+        out_file.close()
+        path_results = os.path.join('结果', string)
+        if not os.path.exists(path_results):
+            os.makedirs(path_results)
+        write_error_msg(msg_error, os.path.join(path_results, r'识别错误信息.txt'))
+
     print('获取信息完成')
     return mylist, string
 
